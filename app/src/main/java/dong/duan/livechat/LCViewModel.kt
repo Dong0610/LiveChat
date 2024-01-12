@@ -250,6 +250,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
                                     )
 
                                     firestore.collection(KEY_CHAT).document(id).set(chat)
+                                        .addOnSuccessListener { show_toast("Create chat success") }
 
                                 }
                             }

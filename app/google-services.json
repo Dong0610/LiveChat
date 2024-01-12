@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "710462798836",
+    "project_id": "livechat-1acad",
+    "storage_bucket": "livechat-1acad.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710462798836:android:8a810f40c7be5a4e0517a1",
+        "android_client_info": {
+          "package_name": "dong.duan.livechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCL2TXvEnO-H2FjVSJr4rNkp6cQZGxdn8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

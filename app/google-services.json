@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "710462798836",
+    "firebase_url": "https://livechat-1acad-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "livechat-1acad",
     "storage_bucket": "livechat-1acad.appspot.com"
   },
@@ -12,7 +13,12 @@
           "package_name": "dong.duan.livechat"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "710462798836-bmvdcl7ug9ddolp3pacf9foftev7jk7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCL2TXvEnO-H2FjVSJr4rNkp6cQZGxdn8c"
@@ -20,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "710462798836-bmvdcl7ug9ddolp3pacf9foftev7jk7n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

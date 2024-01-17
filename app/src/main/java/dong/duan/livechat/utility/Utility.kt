@@ -1,6 +1,11 @@
 package dong.duan.livechat.utility
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -19,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -48,6 +54,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -304,6 +311,60 @@ fun MessageRow(
 }
 
 
+
+@Composable
+fun DotsFlashing(dotSize: Dp =18.dp,color: Color= Color.Blue,delayUnit:Int=750) {
+    val minAlpha = 0.1f
+
+    @Composable
+    fun Dot(
+        alpha: Float
+    ) = Spacer(
+        Modifier
+            .size(dotSize)
+            .alpha(alpha)
+            .background(
+                color = color,
+                shape = CircleShape
+            )
+    )
+
+    val infiniteTransition = rememberInfiniteTransition()
+
+    @Composable
+    fun animateAlphaWithDelay(delay: Int) = infiniteTransition.animateFloat(
+        initialValue = minAlpha,
+        targetValue = minAlpha,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = delayUnit * 4
+                minAlpha at delay with LinearEasing
+                1f at delay + delayUnit with LinearEasing
+                minAlpha at delay + delayUnit * 2
+            }
+        )
+    )
+
+    val alpha1 by animateAlphaWithDelay(0)
+    val alpha2 by animateAlphaWithDelay(delayUnit)
+    val alpha3 by animateAlphaWithDelay(delayUnit * 2)
+    val alpha4 by animateAlphaWithDelay(delayUnit * 3)
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        val spaceSize = 12.dp
+
+        Dot(alpha1)
+        Spacer(Modifier.width(spaceSize))
+        Dot(alpha2)
+        Spacer(Modifier.width(spaceSize))
+        Dot(alpha3)
+        Spacer(Modifier.width(spaceSize))
+        Dot(alpha4)
+    }
+}
 
 
 

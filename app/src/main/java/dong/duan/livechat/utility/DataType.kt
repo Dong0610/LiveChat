@@ -1,5 +1,7 @@
 package dong.duan.livechat.utility
 
+import java.util.Date
+
 data class UserData(
     var userID: String? = "",
     var userName: String? = "",
@@ -18,6 +20,8 @@ data class UserData(
         )
 
 }
+
+data class Message(var id:String?="",var message:String?="",var time:String=Date().time.toString(),var senderID:String="",var receiveID:String="")
 
 data class ChatUser(
     var userID: String? = "",

@@ -1,5 +1,6 @@
 package dong.duan.livechat
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
@@ -7,6 +8,11 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
@@ -14,6 +20,7 @@ import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dong.duan.lib.library.OnPutImageListener
 import dong.duan.lib.library.putImgToStorage
@@ -24,16 +31,22 @@ import dong.duan.livechat.utility.ChatUser
 import dong.duan.livechat.utility.Event
 import dong.duan.livechat.utility.KEY_CHAT
 import dong.duan.livechat.utility.KEY_USER
+import dong.duan.livechat.utility.Message
 import dong.duan.livechat.utility.UserData
+import java.util.Date
 import javax.inject.Inject
 
 
 @HiltViewModel
 class LCViewModel @Inject constructor() : ViewModel() {
+
+    val isLongPress = mutableStateOf(false)
+    @SuppressLint("MutableCollectionMutableState")
     val chats = mutableStateOf<MutableList<ChatData>>(mutableListOf())
     val auth: FirebaseAuth = Firebase.auth
     val firestore: FirebaseFirestore = Firebase.firestore
-    val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    val storage: FirebaseStorage = Firebase.storage
+    val database: FirebaseDatabase = Firebase.database
 
     var inProcess = mutableStateOf(false)
     val eventMutableState = mutableStateOf<Event<String>?>(null)
@@ -41,11 +54,13 @@ class LCViewModel @Inject constructor() : ViewModel() {
     var userData = mutableStateOf<UserData?>(null)
     var userImg = mutableStateOf<String?>(null)
 
+    val listMessage = mutableStateOf<MutableList<Message>>(mutableListOf())
+
     val inProcessChat = mutableStateOf(false)
 
 
     init {
-        var currentUser = auth.currentUser
+        val currentUser = auth.currentUser
         signIn.value = currentUser != null
         currentUser?.uid?.let {
             getUserData(it)
@@ -87,6 +102,10 @@ class LCViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun currentChat(chatID: String, calback: (ChatData) -> Unit) {
+        chats.value.toMutableList().find { it -> it.chatID == chatID }?.let { it1 -> calback(it1) }
+    }
+
     fun createOrUpdateProfile(
         usname: String = "",
         email: String = "",
@@ -96,9 +115,9 @@ class LCViewModel @Inject constructor() : ViewModel() {
         val uuID = auth.currentUser?.uid
         val userData = UserData(
             userID = uuID,
-            userName = usname ?: userData.value?.userName,
-            userEmail = email ?: userData.value?.userEmail,
-            password = passWord ?: userData.value?.password,
+            userName = usname,
+            userEmail = email,
+            password = passWord,
             imgUrl = imageUrl ?: userData.value?.imgUrl,
         )
         uuID.let {
@@ -140,6 +159,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
                     userImg.value = users?.imgUrl
                     inProcess.value = false
                     sharedPreferences.putBollean("KEY_SIGN", true)
+                    PopulateChat()
                 }
             }
     }
@@ -213,12 +233,12 @@ class LCViewModel @Inject constructor() : ViewModel() {
                 .where(
                     Filter.or(
                         Filter.and(
-                            Filter.equalTo("user1.email", email),
-                            Filter.equalTo("user2.email", userData.value?.userEmail)
+                            Filter.equalTo("reciveUser.email", email),
+                            Filter.equalTo("sendUser.email", userData.value?.userEmail)
                         ),
                         Filter.and(
-                            Filter.equalTo("user1.email", userData.value?.userEmail),
-                            Filter.equalTo("user2.email", email)
+                            Filter.equalTo("reciveUser.email", userData.value?.userEmail),
+                            Filter.equalTo("sendUser.email", email)
                         )
                     )
                 )
@@ -262,6 +282,86 @@ class LCViewModel @Inject constructor() : ViewModel() {
                     }
                 }
         }
+    }
+
+    fun InitMessage(chatID: String) {
+        database.getReference("CHATS_LIST")
+            .child(chatID)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val messages = mutableListOf<Message>()
+
+                    for (messageSnapshot in snapshot.children) {
+                        val message = messageSnapshot.getValue(Message::class.java)
+                        message?.let {
+                            messages.add(it)
+                        }
+                    }
+
+                    listMessage.value = messages
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+            })
+
+    }
+
+    fun PopulateChat() {
+        inProcessChat.value = true
+        firestore.collection(KEY_CHAT)
+            .where(
+                Filter.or(
+                    Filter.equalTo("sendUser.userID", userData.value?.userID),
+                    Filter.equalTo("reciveUser.userID", userData.value?.userID),
+                )
+            ).addSnapshotListener { value, error ->
+                if (error == null) {
+                    if (value != null) {
+                        chats.value = value.documents.mapNotNull {
+                            it.toObject<ChatData>()
+                        }.toMutableList()
+                        inProcessChat.value = false
+                    }
+                } else {
+                    show_toast("Error is not null")
+                }
+            }
+    }
+
+    fun SendMessage(messages: String, chatData: ChatData?) {
+        if (chatData == null) {
+            show_toast("ChatData is null")
+            return
+        }
+        val chatID = chatData.chatID
+        if (chatID == null) {
+            show_toast("ChatID is null")
+            return
+        }
+
+
+        var receiverID = ""
+
+        if (chatData.sendUser?.userID == userData.value?.userID.toString()) {
+            receiverID = chatData.reciveUser.userID.toString()
+        } else {
+            receiverID = chatData.sendUser?.userID.toString()
+        }
+
+
+        val message = Message().apply {
+            id = database.getReference("CHATS_LIST").child(chatID).push().key
+            this.message = messages.trim()
+            time = Date().time.toString()
+            this.senderID = userData.value?.userID.toString()
+            this.receiveID = receiverID
+        }
+
+        database.getReference("CHATS_LIST").child(chatID).push().setValue(message)
+
+
     }
 
 

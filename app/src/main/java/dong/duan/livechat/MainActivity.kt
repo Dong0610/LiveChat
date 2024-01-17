@@ -5,59 +5,45 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dong.duan.livechat.Screen.ListChatScreen
 import dong.duan.livechat.Screen.ProfileScreen
+import dong.duan.livechat.Screen.ScreenVModel
 import dong.duan.livechat.Screen.SignInScreen
 import dong.duan.livechat.Screen.SignUpScreen
 import dong.duan.livechat.Screen.SingleChatScreen
 import dong.duan.livechat.Screen.SingleStatusScreen
+import dong.duan.livechat.Screen.SplashScreen
 import dong.duan.livechat.Screen.StatusScreen
 import dong.duan.livechat.ui.theme.LiveChatTheme
-import dong.duan.livechat.ui.theme.WHITE
 
 sealed class DestinationScreen(var route: String) {
     object SignUp : DestinationScreen("signup")
+    object Splash : DestinationScreen("splash")
     object SignIn : DestinationScreen("signin")
     object Profile : DestinationScreen("profile")
     object ListChat : DestinationScreen("Listchat")
     object SingleChat : DestinationScreen("singlechat/{chatID}") {
-        fun createRoute(id: String) = "singlechat/$id"
+        fun createRoute(chatID: String) = "singlechat/$chatID"
     }
 
     object Status : DestinationScreen("status")
@@ -82,6 +68,53 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
+    }
+
+    @SuppressLint("ComposableDestinationInComposeScope")
+    fun NavGraphBuilder.animComposable(
+        route: String,
+        delay:Int=700,
+        content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
+    ) {
+
+        composable(route,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(delay)
+                )
+
+            },
+            exitTransition = {
+
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(delay)
+                )
+
+            },
+            popEnterTransition = {
+
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(delay)
+                )
+
+
+            },
+            popExitTransition = {
+
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(delay)
+                )
+
+
+            }) {
+            content(it)
+        }
+
     }
 
     @Preview
@@ -89,12 +122,16 @@ class MainActivity : ComponentActivity() {
     fun ChatNavigation() {
         val navController = rememberNavController()
         val vm: LCViewModel by viewModels()
-        NavHost(navController = navController, startDestination = DestinationScreen.SignUp.route) {
+        val screenVModel: ScreenVModel by viewModels()
 
-            composable(DestinationScreen.SignUp.route) {
+        NavHost(navController = navController, startDestination = DestinationScreen.Splash.route) {
+            animComposable(DestinationScreen.Splash.route) {
+                SplashScreen(navController, vm)
+            }
+            animComposable(DestinationScreen.SignUp.route) {
                 SignUpScreen(navController, vm)
             }
-            composable(DestinationScreen.SignIn.route) {
+            animComposable(DestinationScreen.SignIn.route) {
                 SignInScreen(navController, vm)
             }
             composable(DestinationScreen.ListChat.route) {
@@ -104,7 +141,8 @@ class MainActivity : ComponentActivity() {
                 ProfileScreen(navController, vm)
             }
             composable(DestinationScreen.SingleChat.route) {
-                SingleChatScreen(navController, vm)
+                val chatID = it.arguments?.getString("chatID")
+                SingleChatScreen(navController, vm, chatID, screenVModel)
             }
             composable(DestinationScreen.Status.route) {
                 StatusScreen(navController, vm)
@@ -115,56 +153,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @SuppressLint("UnrememberedMutableState")
-    @Composable
-    fun CustomTextField() {
-        var name by remember { mutableStateOf(TextFieldValue("")) }
-        Row(
-            Modifier
-                .height(48.dp)
-                .padding(10.dp)
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp),
-                border = BorderStroke(1.dp, Color.LightGray),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(Modifier.background(WHITE)) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .size(24.dp)
-                    )
-                    BasicTextField(
-                        value = name,
-                        keyboardOptions = KeyboardOptions.Default,
-                        onValueChange = { name = it },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(8.dp),
-                        textStyle = TextStyle(
-                            fontSize = 18.sp
-                        )
-                    )
-                    Box(
-                        Modifier
-                            .padding(vertical = 2.dp)
-                            .width(1.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .size(24.dp)
-                    )
-                }
-            }
-        }
-    }
 
 }
+

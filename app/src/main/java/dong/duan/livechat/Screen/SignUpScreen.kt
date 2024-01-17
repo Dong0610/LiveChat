@@ -7,7 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import dong.duan.lib.library.screen_width
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
 import dong.duan.livechat.R
@@ -50,15 +53,16 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
     Box(
         Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
 
 
         Image(
             painter = painterResource(id = R.drawable.img_bg_app),
-            contentDescription = null, contentScale = ContentScale.Crop, modifier =
+            contentDescription = null, contentScale = ContentScale.Fit, modifier =
             Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.28f)
+                .width(screen_width.dp)
+
 
         )
         Column(
@@ -83,7 +87,7 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.chat_icon),
+                    painter = painterResource(id = R.drawable.logo_app),
                     contentDescription = null,
                     modifier = Modifier
                         .height(150.dp)

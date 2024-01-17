@@ -59,7 +59,7 @@ fun ProfileScreen(navController: NavHostController, vm: LCViewModel) {
                     .fillMaxSize()
             ) {
                 ProfileContent(vm, Modifier.weight(1f), onBack = {
-                    NavigateTo(navController,DestinationScreen.ListChat.route)
+                    NavigateTo(navController, DestinationScreen.ListChat.route)
                 })
 
                 BottomNavigation(
@@ -77,7 +77,7 @@ fun ProfileScreen(navController: NavHostController, vm: LCViewModel) {
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun ProfileContent(vm: LCViewModel, modifier: Modifier = Modifier,onBack:()->Unit) {
+fun ProfileContent(vm: LCViewModel, modifier: Modifier = Modifier, onBack: () -> Unit) {
     val userName = mutableStateOf(TextFieldValue(vm.userData.value?.userName!!))
     val password = mutableStateOf(TextFieldValue(vm.userData.value?.password!!))
     Column(modifier) {
@@ -92,7 +92,7 @@ fun ProfileContent(vm: LCViewModel, modifier: Modifier = Modifier,onBack:()->Uni
 
         }
 
-        ProfileImage(imgUrl = vm.userImg.value?:"", vm = vm)
+        ProfileImage(imgUrl = vm.userImg.value ?: "", vm = vm)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -156,17 +156,13 @@ fun ProfileImage(imgUrl: String, vm: LCViewModel) {
                     launcher.launch("image/*")
                 }, horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                shape = CircleShape, modifier = Modifier
-                    .padding(vertical = 8.dp)
-                    .height(180.dp)
+
+                CommonImage(data = imgUrl, modifier =Modifier.height(180.dp)
                     .width(180.dp)
                     .alpha(
                         1f
-                    )
-            ) {
-                CommonImage(data = imgUrl)
-            }
+                    ))
+
 
         }
 
@@ -177,7 +173,7 @@ fun ProfileImage(imgUrl: String, vm: LCViewModel) {
 @Composable
 fun CommonImage(
     data: Any? = null,
-    modifier: Modifier = Modifier.wrapContentSize(),
+    modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop
 ) {
 
@@ -187,7 +183,20 @@ fun CommonImage(
             allowHardware(false)
         }
     )
-    Image(painter = painter, contentDescription = "...", modifier = Modifier)
+
+    Card(
+        shape = CircleShape, modifier = modifier
+            .alpha(
+                1f
+            )
+    ) {
+        Image(
+            painter = painter,
+            contentDescription = "...",
+            contentScale = contentScale,
+            modifier = Modifier.fillMaxWidth().fillMaxHeight()
+        )
+    }
 
 
 }

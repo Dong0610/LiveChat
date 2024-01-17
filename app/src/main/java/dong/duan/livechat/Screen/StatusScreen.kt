@@ -15,7 +15,7 @@ fun StatusScreen(navController: NavHostController, vm: LCViewModel) {
         modifier = Modifier
             .fillMaxSize()
     ) {
-        ChatListContent(modifier = Modifier.weight(1f), vm = vm)
+        ChatListContent(modifier = Modifier.weight(1f), vm = vm, navController = navController)
 
         BottomNavigation(
             select = BottomNavigtionItem.STATUSLIST,

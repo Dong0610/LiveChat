@@ -49,11 +49,11 @@ import androidx.navigation.NavHostController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dong.duan.lib.library.show_toast
 import dong.duan.livechat.LCViewModel
+import dong.duan.livechat.Model.ChatData
 import dong.duan.livechat.ui.theme.APP_COLOR
 import dong.duan.livechat.ui.theme.WHITE
-import dong.duan.livechat.utility.ChatData
-import dong.duan.livechat.utility.CommonDivider
-import dong.duan.livechat.utility.MessageRow
+import dong.duan.livechat.widget.CommonDivider
+import dong.duan.livechat.widget.MessageRow
 import javax.inject.Inject
 
 @SuppressLint("UnrememberedMutableState")

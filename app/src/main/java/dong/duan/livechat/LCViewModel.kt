@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -26,13 +27,13 @@ import dong.duan.lib.library.OnPutImageListener
 import dong.duan.lib.library.putImgToStorage
 import dong.duan.lib.library.sharedPreferences
 import dong.duan.lib.library.show_toast
-import dong.duan.livechat.utility.ChatData
-import dong.duan.livechat.utility.ChatUser
+import dong.duan.livechat.Model.ChatData
+import dong.duan.livechat.Model.ChatUser
+import dong.duan.livechat.Model.Message
+import dong.duan.livechat.Model.UserData
 import dong.duan.livechat.utility.Event
 import dong.duan.livechat.utility.KEY_CHAT
 import dong.duan.livechat.utility.KEY_USER
-import dong.duan.livechat.utility.Message
-import dong.duan.livechat.utility.UserData
 import java.util.Date
 import javax.inject.Inject
 
@@ -41,6 +42,7 @@ import javax.inject.Inject
 class LCViewModel @Inject constructor() : ViewModel() {
 
     val isLongPress = mutableStateOf(false)
+
     @SuppressLint("MutableCollectionMutableState")
     val chats = mutableStateOf<MutableList<ChatData>>(mutableListOf())
     val auth: FirebaseAuth = Firebase.auth
@@ -70,37 +72,74 @@ class LCViewModel @Inject constructor() : ViewModel() {
     fun SignUp(name: String, email: String, passWord: String) {
         inProcess.value = true
 
-        if (!name.isNullOrEmpty() && !email.isNullOrEmpty() && !passWord.isNullOrEmpty()) {
-            firestore.collection(KEY_USER).whereEqualTo("UserEmail", email)
-                .get().addOnSuccessListener {
-                    if (it.isEmpty) {
+        if (name.isNotEmpty() && email.isNotEmpty() && passWord.isNotEmpty()) {
+            firestore.collection(KEY_USER).whereEqualTo("userEmail", email)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (querySnapshot.isEmpty) {
                         auth.createUserWithEmailAndPassword(email, passWord)
-                            .addOnCompleteListener {
+                            .addOnCompleteListener { createAccountTask ->
+                                if (createAccountTask.isSuccessful) {
+                                    // Send confirmation email
+                                    sendConfirmationEmail(email)
 
-                                if (it.isSuccessful) {
                                     show_toast("Sign up success")
                                     signIn.value = true
                                     createOrUpdateProfile(name, email, passWord)
                                 } else {
-                                    it.exception?.let { it1 ->
-                                        handleExceotion(
-                                            it1,
-                                            "Sign in flaid"
-                                        )
+                                    createAccountTask.exception?.let { exception ->
+                                        handleException(exception, "Sign up failed")
                                     }
                                 }
                             }
                     } else {
-                        show_toast("Email is exit")
+                        show_toast("Email already exists")
                         inProcess.value = false
                     }
                 }
-
+                .addOnFailureListener { exception ->
+                    handleException(exception, "Error checking email existence")
+                }
         } else {
-            show_toast("Please enter all value")
-            return
+            show_toast("Please enter all values")
+            inProcess.value = false
         }
     }
+
+
+    fun resetPassword(email: String) {
+        if (email.isNotEmpty()) {
+            auth.sendPasswordResetEmail(email)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        show_toast("Password reset email sent to $email")
+                    } else {
+                        task.exception?.let { exception ->
+                            handleException(exception, "Error sending password reset email")
+                        }
+                    }
+                }
+        } else {
+            show_toast("Please enter your email address")
+        }
+    }
+
+    private fun sendConfirmationEmail(email: String) {
+        val user = auth.currentUser
+        user?.let {
+            it.sendEmailVerification()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        show_toast("Confirmation email sent to $email")
+                    } else {
+                        task.exception?.let { exception ->
+                            handleException(exception, "Error sending confirmation email")
+                        }
+                    }
+                }
+        }
+    }
+
 
     fun currentChat(chatID: String, calback: (ChatData) -> Unit) {
         chats.value.toMutableList().find { it -> it.chatID == chatID }?.let { it1 -> calback(it1) }
@@ -115,6 +154,10 @@ class LCViewModel @Inject constructor() : ViewModel() {
         val uuID = auth.currentUser?.uid
         val userData = UserData(
             userID = uuID,
+            userToken = "",
+            regTime = Date().time.toString(),
+            phoneNum = "",
+            isAvailable = true,
             userName = usname,
             userEmail = email,
             password = passWord,
@@ -130,6 +173,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
                         firestore.collection(KEY_USER).add(userData)
                         inProcess.value = false
                         getUserData(uuID)
+                        resetPassword(email)
                     } else {
                         firestore.collection(KEY_USER).document(uuID.toString()).set(userData)
                         inProcess.value = false
@@ -138,7 +182,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
                 }
                 .addOnFailureListener {
                     show_toast(it.message.toString())
-                    handleExceotion(it, "Create User Fluaid")
+                    handleException(it, "Create User Fluaid")
                 }
         }
     }
@@ -151,7 +195,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
             .document(uuID!!)
             .addSnapshotListener { value, error ->
                 if (error != null) {
-                    handleExceotion(error)
+                    handleException(error)
                 }
                 if (value!!.exists()) {
                     var users = value.toObject<UserData>()
@@ -165,7 +209,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
     }
 
 
-    fun handleExceotion(exception: Exception, customMess: String = "") {
+    fun handleException(exception: Exception, customMess: String = "") {
         Log.e("LiveChat", "Live Chat Exceotion: ", exception)
         exception.printStackTrace()
         val errorMess = exception.localizedMessage ?: ""
@@ -174,32 +218,33 @@ class LCViewModel @Inject constructor() : ViewModel() {
         inProcess.value = false
     }
 
-    fun SignInApp(email: String, pass: String) {
+    fun SignIn(email: String, pass: String) {
         inProcess.value = true
-        firestore.collection(KEY_USER).whereEqualTo("userEmail", email)
-            .get().addOnSuccessListener { querySnapshot ->
-                if (querySnapshot.isEmpty) {
-                    show_toast("Account is not registered in the app")
-                    inProcess.value = false
-                } else {
-                    val userDocument = querySnapshot.documents[0]
-                    if (userDocument.getString("password") == pass) {
-                        auth.signInWithEmailAndPassword(email, pass)
-                            .addOnCompleteListener {
-                                signIn.value = true
-                                inProcess.value = false
-                                auth.currentUser?.uid.let {
-                                    getUserData(uuID = auth.currentUser?.uid)
-                                }
-                            }
-
-                        inProcess.value = true
-                    } else {
-                        show_toast("Invalid password")
-                        inProcess.value = false
-                    }
-                }
-            }
+        resetPassword(email)
+//        firestore.collection(KEY_USER).whereEqualTo("userEmail", email)
+//            .get().addOnSuccessListener { querySnapshot ->
+//                if (querySnapshot.isEmpty) {
+//                    show_toast("Account is not registered in the app")
+//                    inProcess.value = false
+//                } else {
+//                    val userDocument = querySnapshot.documents[0]
+//                    if (userDocument.getString("password") == pass) {
+//                        auth.signInWithEmailAndPassword(email, pass)
+//                            .addOnCompleteListener {
+//                                signIn.value = true
+//                                inProcess.value = false
+//                                auth.currentUser?.uid.let {
+//                                    getUserData(uuID = auth.currentUser?.uid)
+//                                }
+//                            }
+//
+//                        inProcess.value = true
+//                    } else {
+//                        show_toast("Invalid password")
+//                        inProcess.value = false
+//                    }
+//                }
+//            }
     }
 
     fun uploadImageToFirebase(uri: Uri?) {
@@ -362,6 +407,16 @@ class LCViewModel @Inject constructor() : ViewModel() {
         database.getReference("CHATS_LIST").child(chatID).push().setValue(message)
 
 
+    }
+
+    fun loginWithGoogle(idToken: String) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        Firebase.auth.signInWithCredential(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    show_toast("Sign in Success")
+                }
+            }
     }
 
 

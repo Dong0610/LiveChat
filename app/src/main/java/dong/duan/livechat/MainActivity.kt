@@ -1,30 +1,37 @@
 package dong.duan.livechat
 
-import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavGraphBuilder
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
+import dong.duan.lib.library.show_toast
+import dong.duan.livechat.Screen.HomeScreen
 import dong.duan.livechat.Screen.ListChatScreen
 import dong.duan.livechat.Screen.ProfileScreen
 import dong.duan.livechat.Screen.ScreenVModel
@@ -35,6 +42,9 @@ import dong.duan.livechat.Screen.SingleStatusScreen
 import dong.duan.livechat.Screen.SplashScreen
 import dong.duan.livechat.Screen.StatusScreen
 import dong.duan.livechat.ui.theme.LiveChatTheme
+import dong.duan.livechat.widget.animComposable
+import javax.annotation.Nullable
+
 
 sealed class DestinationScreen(var route: String) {
     object SignUp : DestinationScreen("signup")
@@ -46,87 +56,46 @@ sealed class DestinationScreen(var route: String) {
         fun createRoute(chatID: String) = "singlechat/$chatID"
     }
 
-    object Status : DestinationScreen("status")
+    object Friend : DestinationScreen("friend")
     object SingleStatus : DestinationScreen("singlestatus/{chatID}") {
         fun createRoute(usID: String) = "singlestatus/$usID"
     }
+    object Home : DestinationScreen("home")
+
 }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val vm: LCViewModel by viewModels()
+    private val screenVModel: ScreenVModel by viewModels()
+
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            LiveChatTheme() {
-
+            LiveChatTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     ChatNavigation()
                 }
             }
         }
-
-
-    }
-
-    @SuppressLint("ComposableDestinationInComposeScope")
-    fun NavGraphBuilder.animComposable(
-        route: String,
-        delay:Int=700,
-        content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
-    ) {
-
-        composable(route,
-            enterTransition = {
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(delay)
-                )
-
-            },
-            exitTransition = {
-
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(delay)
-                )
-
-            },
-            popEnterTransition = {
-
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(delay)
-                )
-
-
-            },
-            popExitTransition = {
-
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(delay)
-                )
-
-
-            }) {
-            content(it)
-        }
-
     }
 
     @Preview
     @Composable
     fun ChatNavigation() {
-        val navController = rememberNavController()
-        val vm: LCViewModel by viewModels()
-        val screenVModel: ScreenVModel by viewModels()
 
+        val navController = rememberNavController()
         NavHost(navController = navController, startDestination = DestinationScreen.Splash.route) {
             animComposable(DestinationScreen.Splash.route) {
                 SplashScreen(navController, vm)
+            }
+            animComposable(DestinationScreen.Home.route) {
+                HomeScreen(navController, vm)
             }
             animComposable(DestinationScreen.SignUp.route) {
                 SignUpScreen(navController, vm)
@@ -134,20 +103,20 @@ class MainActivity : ComponentActivity() {
             animComposable(DestinationScreen.SignIn.route) {
                 SignInScreen(navController, vm)
             }
-            composable(DestinationScreen.ListChat.route) {
+            animComposable(DestinationScreen.ListChat.route) {
                 ListChatScreen(navController, vm)
             }
-            composable(DestinationScreen.Profile.route) {
+            animComposable(DestinationScreen.Profile.route) {
                 ProfileScreen(navController, vm)
             }
-            composable(DestinationScreen.SingleChat.route) {
+            animComposable(DestinationScreen.SingleChat.route) {
                 val chatID = it.arguments?.getString("chatID")
                 SingleChatScreen(navController, vm, chatID, screenVModel)
             }
-            composable(DestinationScreen.Status.route) {
+            animComposable(DestinationScreen.Friend.route) {
                 StatusScreen(navController, vm)
             }
-            composable(DestinationScreen.SingleStatus.route) {
+            animComposable(DestinationScreen.SingleStatus.route) {
                 SingleStatusScreen(navController, vm)
             }
         }

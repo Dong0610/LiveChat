@@ -1,6 +1,7 @@
 package dong.duan.livechat.Screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
@@ -26,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -36,9 +40,11 @@ import dong.duan.livechat.LCViewModel
 import dong.duan.livechat.R
 import dong.duan.livechat.ui.theme.APP_COLOR
 import dong.duan.livechat.ui.theme.WHITE
-import dong.duan.livechat.utility.CommonProgressBar
-import dong.duan.livechat.utility.ListChatItem
-import dong.duan.livechat.utility.NavigateTo
+import dong.duan.livechat.widget.BottomNavigation
+import dong.duan.livechat.widget.BottomNavigtionItem
+import dong.duan.livechat.widget.CommonProgressBar
+import dong.duan.livechat.widget.ListChatItem
+import dong.duan.livechat.widget.NavigateTo
 
 @Composable
 fun ListChatScreen(navController: NavHostController, vm: LCViewModel) {
@@ -49,7 +55,19 @@ fun ListChatScreen(navController: NavHostController, vm: LCViewModel) {
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            ChatListContent(modifier = Modifier.weight(1f), vm, navController)
+            Column(
+                Modifier
+                    .weight(1f)
+                    .background(Color.Cyan)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Hello, this is your content!",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+            }
 
             BottomNavigation(
                 select = BottomNavigtionItem.CHATLIST,
@@ -62,6 +80,33 @@ fun ListChatScreen(navController: NavHostController, vm: LCViewModel) {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable

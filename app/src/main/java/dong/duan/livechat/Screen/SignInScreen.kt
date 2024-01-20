@@ -2,6 +2,11 @@
 
 package dong.duan.livechat.Screen
 
+import android.app.Activity
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,21 +49,60 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.firebase.components.BuildConfig
+
+
 import dong.duan.lib.library.screen_width
+import dong.duan.lib.library.show_toast
+import dong.duan.livechat.AppContext
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
 import dong.duan.livechat.R
+import dong.duan.livechat.ui.theme.MEDIUM_BLUE
+import dong.duan.livechat.ui.theme.ORANGE_RED
+import dong.duan.livechat.ui.theme.RED
+import dong.duan.livechat.ui.theme.ROYAL_BLUE
 import dong.duan.livechat.ui.theme.WHITE
-import dong.duan.livechat.utility.CheckSignIn
-import dong.duan.livechat.utility.CommonProgressBar
+import dong.duan.livechat.widget.CommonProgressBar
 
+object GoogleSignInHelper {
+    fun getGoogleSignInClient(context: Context) = Identity.getSignInClient(context)
+
+    fun getGoogleSignInRequest() = BeginSignInRequest.builder()
+        .setGoogleIdTokenRequestOptions(
+            BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                .setSupported(true)
+                .setServerClientId("710462798836-9ksu1catn78rtnj2qv3hmm58r0lgpp9s.apps.googleusercontent.com") // Can be obtained in Google Cloud
+                .setFilterByAuthorizedAccounts(false)
+                .build()
+        ).build()
+}
 
 @Composable
 @Preview
-fun SignInScreen(navController: NavHostController?, vm: LCViewModel?) {
+fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
     var email by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
-    CheckSignIn(vm = vm!!, navController = navController!!)
+
+
+    val client = remember { GoogleSignInHelper.getGoogleSignInClient(AppContext.context) }
+    val request = remember { GoogleSignInHelper.getGoogleSignInRequest() }
+    val signInResultLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if(result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val credential = client.getSignInCredentialFromIntent(result.data)
+            val idToken = credential.googleIdToken
+
+            if(idToken != null) {
+                show_toast("Success:$idToken")
+            } else {
+               show_toast("Sign failed")
+            }
+        }
+    }
     Box(
         Modifier
             .fillMaxSize()
@@ -105,7 +150,7 @@ fun SignInScreen(navController: NavHostController?, vm: LCViewModel?) {
             Text(
                 text = "Welcome back",
                 fontSize = 24.sp,
-                color = Color(0xFF673AB7),
+                color = Color(0xFF5B02FF),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(PaddingValues(vertical = 12.dp)),
@@ -152,14 +197,14 @@ fun SignInScreen(navController: NavHostController?, vm: LCViewModel?) {
                     .background(
                         brush = Brush.horizontalGradient(
                             colors = arrayOf(
-                                Color(0xFF0076FE),
-                                Color(0xFF027FFF)
+                                Color(0xFF00FE90),
+                                Color(0xFF5B02FF)
                             ).toList()
                         ),
                         shape = RoundedCornerShape(4.dp)
                     )
                     .clickable {
-                        vm?.SignInApp(email.text, password.text)
+                        vm?.SignIn(email.text, password.text)
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -171,14 +216,27 @@ fun SignInScreen(navController: NavHostController?, vm: LCViewModel?) {
                     fontSize = 16.sp
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Forgot password",
+                    color = Color.Gray,
+                    fontFamily = FontFamily(Font(R.font.fira_reg)),
+                    fontSize = 16.sp, modifier = Modifier.clickable {
+                        vm.resetPassword(email.text)
+                    }
+                )
+            }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(52.dp),
+                    .height(32.dp),
 
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -190,11 +248,11 @@ fun SignInScreen(navController: NavHostController?, vm: LCViewModel?) {
                     fontSize = 16.sp
                 )
                 Text(
-                    text = " Sign Up",
-                    color = Color(0xFF673AB7),
+                    text = " Sign In",
+                    color = Color(0xFF5B02FF),
                     fontFamily = FontFamily(Font(R.font.fira_reg)),
                     fontSize = 16.sp,
-                    modifier=Modifier.clickable {
+                    modifier = Modifier.clickable {
                         navController!!.navigate(DestinationScreen.SignUp.route)
                         {
                             popUpTo(0)
@@ -202,10 +260,90 @@ fun SignInScreen(navController: NavHostController?, vm: LCViewModel?) {
                     }
                 )
             }
-        }
 
-        if(vm.inProcess.value){
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(52.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = arrayOf(
+                                RED,
+                                ORANGE_RED
+                            ).toList()
+                        ),
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .clickable {
+
+                        client.beginSignIn(request).addOnCompleteListener { task ->
+                            if(task.isSuccessful) {
+                                val intentSender = task.result.pendingIntent.intentSender
+                                val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+                                signInResultLauncher.launch(intentSenderRequest)
+                            } else {
+                              show_toast(task.exception?.message.toString())
+                            }
+                        }
+
+                    },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.google),
+                    contentDescription = null,
+                    tint = WHITE,
+                    modifier = Modifier.padding(12.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Sign in with Google",
+                    color = Color.White,
+                    fontFamily = FontFamily(Font(R.font.fira_medium)),
+                    fontSize = 16.sp
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp)
+                    .height(52.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = arrayOf(
+                                MEDIUM_BLUE, ROYAL_BLUE
+                            ).toList()
+                        ),
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .clickable {
+                        vm?.SignIn(email.text, password.text)
+                    },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.facebook),
+                    contentDescription = null,
+                    tint = WHITE,
+                    modifier = Modifier.padding(12.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Sign in with Facebook",
+                    color = Color.White,
+                    fontFamily = FontFamily(Font(R.font.fira_medium)),
+                    fontSize = 16.sp
+                )
+            }
+        }
+        if (vm!!.inProcess.value) {
             CommonProgressBar()
         }
     }
 }
+

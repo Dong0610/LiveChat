@@ -1,18 +1,19 @@
-package dong.duan.livechat.utility
+package dong.duan.livechat.widget
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -32,11 +33,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,14 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
@@ -60,10 +59,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import dong.duan.ecommerce.library.log
+import dong.duan.lib.library.width_percent
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
+import dong.duan.livechat.Model.Message
 import dong.duan.livechat.Screen.CommonImage
+import dong.duan.livechat.ui.theme.LIGHT_GREY
 import dong.duan.livechat.ui.theme.WHITE
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 fun NavigateTo(navController: NavController, router: String) {
@@ -72,19 +77,60 @@ fun NavigateTo(navController: NavController, router: String) {
         launchSingleTop = true
     }
 }
-
 @Composable
-fun CommonProgressBar() {
-    Row(modifier = Modifier
-        .alpha(0.5f)
-        .background(WHITE)
-        .clickable(enabled = false) {}
-        .fillMaxSize(),
+fun CommonProgressBar(speed:Int=1000) {
+    val indicatorSize = width_percent(6.5f).dp
+    val trackWidth: Dp = (indicatorSize * 0.1f)
+    @Composable
+    fun animateRotation(): Float {
+        val infiniteTransition = rememberInfiniteTransition()
+        val rotation by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(speed, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ), label = ""
+        )
+        return rotation
+    }
+    val commonModifier = Modifier
+        .size(indicatorSize)
+        .rotate(animateRotation())
+    Row(
+        modifier = Modifier
+
+            .background(Color(0x10000000))
+            .clickable(enabled = false) {}
+            .fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center) {
-        CircularProgressIndicator()
+        horizontalArrangement = Arrangement.Center
+    ) {
+        GradientProgressIndicator(
+            progress = 100f,
+            modifier = commonModifier,
+            strokeWidth = trackWidth,
+            gradientStart = ProgressBarColor.Blue.gradientStart,
+            gradientEnd = ProgressBarColor.Purple.gradientEnd,
+            trackColor = Color.LightGray,
+        )
     }
 }
+
+
+enum class ProgressBarColor(val gradientStart: Color, val gradientEnd: Color) {
+    Red(Color(254, 222, 224), Color(255, 31, 43)),
+    Green(Color(168, 242, 205), Color(38, 222, 129)),
+    Blue(Color(219, 229, 251), Color(75, 123, 236)),
+    Purple(Color(224, 204, 255), Color(98, 0, 254, 255));
+
+    operator fun invoke(): Color {
+        return gradientEnd
+    }
+}
+
+val trackColor = WHITE
+
 
 @Composable
 fun CommonDivider(modifier: Modifier = Modifier) {
@@ -342,7 +388,7 @@ fun DotsFlashing(dotSize: Dp =18.dp,color: Color= Color.Blue,delayUnit:Int=750) 
                 1f at delay + delayUnit with LinearEasing
                 minAlpha at delay + delayUnit * 2
             }
-        )
+        ), label = ""
     )
 
     val alpha1 by animateAlphaWithDelay(0)

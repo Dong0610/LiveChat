@@ -6,7 +6,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -39,15 +49,15 @@ import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
 import dong.duan.livechat.R
 import dong.duan.livechat.ui.theme.WHITE
-import dong.duan.livechat.utility.CheckSignIn
-import dong.duan.livechat.utility.CommonProgressBar
+import dong.duan.livechat.widget.CheckSignIn
+import dong.duan.livechat.widget.CommonProgressBar
 
 @Composable
 @Preview
 fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
     var name by remember { mutableStateOf(TextFieldValue("")) }
     var email by remember { mutableStateOf(TextFieldValue("")) }
-    var repass by remember{ mutableStateOf(TextFieldValue("")) }
+    var repass by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
     CheckSignIn(vm = vm!!, navController = navController!!)
     Box(
@@ -98,7 +108,7 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
             Text(
                 text = "Create an account",
                 fontSize = 24.sp,
-                color = Color(0xFF673AB7),
+                color = Color(0xFF5B02FF),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(PaddingValues(vertical = 12.dp)),
@@ -127,7 +137,7 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
             ) {
                 OutlinedTextField(
                     value = email,
-                    visualTransformation =VisualTransformation.None,
+                    visualTransformation = VisualTransformation.None,
                     label = { Text(text = "Email") },
                     onValueChange = {
                         email = it
@@ -159,7 +169,7 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
                 OutlinedTextField(
                     value = repass,
                     visualTransformation = PasswordVisualTransformation(),
-                    label = { Text(text = "Password") },
+                    label = { Text(text = "Confirm password") },
                     onValueChange = {
                         repass = it
                     },
@@ -176,8 +186,8 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
                     .background(
                         brush = Brush.horizontalGradient(
                             colors = arrayOf(
-                                Color(0xFF0076FE),
-                                Color(0xFF027FFF)
+                                Color(0xFF00FE90),
+                                Color(0xFF5B02FF)
                             ).toList()
                         ),
                         shape = RoundedCornerShape(4.dp)
@@ -217,7 +227,7 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
                     fontFamily = FontFamily(Font(R.font.fira_reg)),
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
-                        navController!!.navigate(DestinationScreen.SignIn.route)
+                        navController.navigate(DestinationScreen.SignIn.route)
                         {
                             popUpTo(0)
                         }
@@ -226,9 +236,13 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
             }
         }
 
-        if(vm.inProcess.value){
+    }
+
+    if (vm.inProcess.value) {
+        Column(Modifier.fillMaxSize().fillMaxSize(1f)) {
             CommonProgressBar()
         }
+
     }
 }
 

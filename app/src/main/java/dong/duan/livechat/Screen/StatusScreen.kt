@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import dong.duan.livechat.LCViewModel
+import dong.duan.livechat.widget.BottomNavigation
+import dong.duan.livechat.widget.BottomNavigtionItem
 
 @Composable
 fun StatusScreen(navController: NavHostController, vm: LCViewModel) {

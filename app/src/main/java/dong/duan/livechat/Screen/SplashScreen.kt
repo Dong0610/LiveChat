@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
-import dong.duan.livechat.utility.DotsFlashing
+import dong.duan.livechat.widget.DotsFlashing
 import kotlinx.coroutines.delay
 
 @Composable
@@ -58,7 +58,6 @@ fun SplashScreen(navController: NavHostController, vm: LCViewModel) {
 
     LaunchedEffect(key1 = true) {
         delay(1500)
-
         navController.run { navigate(DestinationScreen.SignIn.route) }
     }
 }

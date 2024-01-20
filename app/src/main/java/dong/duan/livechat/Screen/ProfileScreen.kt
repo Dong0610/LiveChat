@@ -38,8 +38,10 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
-import dong.duan.livechat.utility.CommonProgressBar
-import dong.duan.livechat.utility.NavigateTo
+import dong.duan.livechat.widget.BottomNavigation
+import dong.duan.livechat.widget.BottomNavigtionItem
+import dong.duan.livechat.widget.CommonProgressBar
+import dong.duan.livechat.widget.NavigateTo
 
 @Preview
 @Composable

@@ -13,7 +13,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
@@ -33,7 +32,7 @@ enum class BottomNavigtionItem(var icon: Int, var screen: DestinationScreen) {
 @Composable
 fun BottomNavigation(
     select: BottomNavigtionItem,
-    navController: NavController,
+    navController: NavController?,
     modifier: Modifier = Modifier
 ) {
     val gradientColors = listOf(Color(0xFF02FF9A), Color(0xFF0622BD))
@@ -66,7 +65,7 @@ fun BottomNavigation(
                         .padding(top = 6.dp, bottom = 4.dp)
                         .weight(1f)
                         .clickable {
-                            NavigateTo(navController, item.screen.route)
+                            NavigateTo(navController!!, item.screen.route)
                         },
                     colorFilter = if (item == select) ColorFilter.lighting(Color(0xFF02FF9A), Color(0xFF0622BD)) else ColorFilter.tint(
                         Color.LightGray

@@ -2,11 +2,8 @@
 
 package dong.duan.livechat.Screen
 
-import android.app.Activity
+
 import android.content.Context
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -51,12 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.firebase.components.BuildConfig
-
-
 import dong.duan.lib.library.screen_width
 import dong.duan.lib.library.show_toast
-import dong.duan.livechat.AppContext
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
 import dong.duan.livechat.R
@@ -74,11 +67,12 @@ object GoogleSignInHelper {
         .setGoogleIdTokenRequestOptions(
             BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                 .setSupported(true)
-                .setServerClientId("710462798836-9ksu1catn78rtnj2qv3hmm58r0lgpp9s.apps.googleusercontent.com") // Can be obtained in Google Cloud
+                .setServerClientId("710462798836-9ksu1catn78rtnj2qv3hmm58r0lgpp9s.apps.googleusercontent.com")
                 .setFilterByAuthorizedAccounts(false)
                 .build()
         ).build()
 }
+
 
 @Composable
 @Preview
@@ -86,23 +80,6 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
     var email by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
 
-
-    val client = remember { GoogleSignInHelper.getGoogleSignInClient(AppContext.context) }
-    val request = remember { GoogleSignInHelper.getGoogleSignInRequest() }
-    val signInResultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if(result.resultCode == Activity.RESULT_OK && result.data != null) {
-            val credential = client.getSignInCredentialFromIntent(result.data)
-            val idToken = credential.googleIdToken
-
-            if(idToken != null) {
-                show_toast("Success:$idToken")
-            } else {
-               show_toast("Sign failed")
-            }
-        }
-    }
     Box(
         Modifier
             .fillMaxSize()
@@ -266,6 +243,7 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
+                    .padding(top=20.dp)
                     .height(52.dp)
                     .background(
                         brush = Brush.horizontalGradient(
@@ -277,17 +255,7 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                         shape = RoundedCornerShape(4.dp)
                     )
                     .clickable {
-
-                        client.beginSignIn(request).addOnCompleteListener { task ->
-                            if(task.isSuccessful) {
-                                val intentSender = task.result.pendingIntent.intentSender
-                                val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
-                                signInResultLauncher.launch(intentSenderRequest)
-                            } else {
-                              show_toast(task.exception?.message.toString())
-                            }
-                        }
-
+                               show_toast("Not set up")
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically

@@ -1,12 +1,8 @@
 package dong.duan.livechat
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -14,23 +10,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.AuthResult
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
-import dong.duan.lib.library.show_toast
 import dong.duan.livechat.Screen.HomeScreen
 import dong.duan.livechat.Screen.ListChatScreen
 import dong.duan.livechat.Screen.ProfileScreen
@@ -43,7 +25,6 @@ import dong.duan.livechat.Screen.SplashScreen
 import dong.duan.livechat.Screen.StatusScreen
 import dong.duan.livechat.ui.theme.LiveChatTheme
 import dong.duan.livechat.widget.animComposable
-import javax.annotation.Nullable
 
 
 sealed class DestinationScreen(var route: String) {
@@ -69,7 +50,6 @@ class MainActivity : ComponentActivity() {
     private val vm: LCViewModel by viewModels()
     private val screenVModel: ScreenVModel by viewModels()
 
-    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +60,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     ChatNavigation()
+
                 }
             }
         }
@@ -88,7 +69,6 @@ class MainActivity : ComponentActivity() {
     @Preview
     @Composable
     fun ChatNavigation() {
-
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = DestinationScreen.Splash.route) {
             animComposable(DestinationScreen.Splash.route) {
@@ -120,6 +100,7 @@ class MainActivity : ComponentActivity() {
                 SingleStatusScreen(navController, vm)
             }
         }
+
     }
 
 

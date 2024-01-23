@@ -80,9 +80,7 @@ class LCViewModel @Inject constructor() : ViewModel() {
                         auth.createUserWithEmailAndPassword(email, passWord)
                             .addOnCompleteListener { createAccountTask ->
                                 if (createAccountTask.isSuccessful) {
-                                    // Send confirmation email
                                     sendConfirmationEmail(email)
-
                                     show_toast("Sign up success")
                                     signIn.value = true
                                     createOrUpdateProfile(name, email, passWord)
@@ -220,31 +218,30 @@ class LCViewModel @Inject constructor() : ViewModel() {
 
     fun SignIn(email: String, pass: String) {
         inProcess.value = true
-        resetPassword(email)
-//        firestore.collection(KEY_USER).whereEqualTo("userEmail", email)
-//            .get().addOnSuccessListener { querySnapshot ->
-//                if (querySnapshot.isEmpty) {
-//                    show_toast("Account is not registered in the app")
-//                    inProcess.value = false
-//                } else {
-//                    val userDocument = querySnapshot.documents[0]
-//                    if (userDocument.getString("password") == pass) {
-//                        auth.signInWithEmailAndPassword(email, pass)
-//                            .addOnCompleteListener {
-//                                signIn.value = true
-//                                inProcess.value = false
-//                                auth.currentUser?.uid.let {
-//                                    getUserData(uuID = auth.currentUser?.uid)
-//                                }
-//                            }
-//
-//                        inProcess.value = true
-//                    } else {
-//                        show_toast("Invalid password")
-//                        inProcess.value = false
-//                    }
-//                }
-//            }
+        firestore.collection(KEY_USER).whereEqualTo("userEmail", email)
+            .get().addOnSuccessListener { querySnapshot ->
+                if (querySnapshot.isEmpty) {
+                    show_toast("Account is not registered in the app")
+                    inProcess.value = false
+                } else {
+                    val userDocument = querySnapshot.documents[0]
+                    if (userDocument.getString("password") == pass) {
+                        auth.signInWithEmailAndPassword(email, pass)
+                            .addOnCompleteListener {
+                                signIn.value = true
+                                inProcess.value = false
+                                auth.currentUser?.uid.let {
+                                    getUserData(uuID = auth.currentUser?.uid)
+                                }
+                            }
+
+                        inProcess.value = true
+                    } else {
+                        show_toast("Invalid password")
+                        inProcess.value = false
+                    }
+                }
+            }
     }
 
     fun uploadImageToFirebase(uri: Uri?) {

@@ -58,6 +58,7 @@ import dong.duan.livechat.ui.theme.ORANGE_RED
 import dong.duan.livechat.ui.theme.RED
 import dong.duan.livechat.ui.theme.ROYAL_BLUE
 import dong.duan.livechat.ui.theme.WHITE
+import dong.duan.livechat.widget.CheckSignIn
 import dong.duan.livechat.widget.CommonProgressBar
 
 object GoogleSignInHelper {
@@ -79,7 +80,7 @@ object GoogleSignInHelper {
 fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
     var email by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
-
+    CheckSignIn(vm = vm, navController = navController)
     Box(
         Modifier
             .fillMaxSize()
@@ -181,7 +182,7 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                         shape = RoundedCornerShape(4.dp)
                     )
                     .clickable {
-                        vm?.SignIn(email.text, password.text)
+                        vm.signIn(email.text, password.text)
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -205,7 +206,7 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                     color = Color.Gray,
                     fontFamily = FontFamily(Font(R.font.fira_reg)),
                     fontSize = 16.sp, modifier = Modifier.clickable {
-                        vm.resetPassword(email.text)
+                      //  vm.resetPassword(email.text)
                     }
                 )
             }
@@ -225,12 +226,12 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                     fontSize = 16.sp
                 )
                 Text(
-                    text = " Sign In",
+                    text = " Sign Up",
                     color = Color(0xFF5B02FF),
                     fontFamily = FontFamily(Font(R.font.fira_reg)),
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
-                        navController!!.navigate(DestinationScreen.SignUp.route)
+                        navController.navigate(DestinationScreen.SignUp.route)
                         {
                             popUpTo(0)
                         }
@@ -289,7 +290,7 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                         shape = RoundedCornerShape(4.dp)
                     )
                     .clickable {
-                        vm?.SignIn(email.text, password.text)
+                      //  vm?.signIn(email.text, password.text)
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -309,9 +310,9 @@ fun SignInScreen(navController: NavHostController, vm: LCViewModel) {
                 )
             }
         }
-        if (vm!!.inProcess.value) {
-            CommonProgressBar()
-        }
+    }
+    if (vm.inProcess.value) {
+        CommonProgressBar()
     }
 }
 

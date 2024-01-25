@@ -193,7 +193,7 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
                         shape = RoundedCornerShape(4.dp)
                     )
                     .clickable {
-                        vm.SignUp(name.text, email.text, password.text)
+                        vm.signUp(name.text, email.text, password.text)
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -237,12 +237,8 @@ fun SignUpScreen(navController: NavHostController?, vm: LCViewModel?) {
         }
 
     }
-
     if (vm.inProcess.value) {
-        Column(Modifier.fillMaxSize().fillMaxSize(1f)) {
-            CommonProgressBar()
-        }
-
+        CommonProgressBar()
     }
 }
 

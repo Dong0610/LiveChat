@@ -5,7 +5,6 @@ package dong.duan.livechat.Screen
 import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -29,17 +26,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import coil.compose.rememberImagePainter
 import dong.duan.livechat.DestinationScreen
 import dong.duan.livechat.LCViewModel
 import dong.duan.livechat.widget.BottomNavigation
 import dong.duan.livechat.widget.BottomNavigtionItem
+import dong.duan.livechat.widget.CommonImage
 import dong.duan.livechat.widget.CommonProgressBar
 import dong.duan.livechat.widget.NavigateTo
 
@@ -60,9 +56,9 @@ fun ProfileScreen(navController: NavHostController, vm: LCViewModel) {
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                ProfileContent(vm, Modifier.weight(1f), onBack = {
+                ProfileContent(navController,vm, Modifier.weight(1f)) {
                     NavigateTo(navController, DestinationScreen.ListChat.route)
-                })
+                }
 
                 BottomNavigation(
                     select = BottomNavigtionItem.PROFILE,
@@ -79,9 +75,14 @@ fun ProfileScreen(navController: NavHostController, vm: LCViewModel) {
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun ProfileContent(vm: LCViewModel, modifier: Modifier = Modifier, onBack: () -> Unit) {
-    val userName = mutableStateOf(TextFieldValue(vm.userData.value?.userName!!))
-    val password = mutableStateOf(TextFieldValue(vm.userData.value?.password!!))
+fun ProfileContent(
+    navController: NavHostController,
+    vm: LCViewModel,
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit
+) {
+    val userName = mutableStateOf(TextFieldValue(vm.userSignIn.value?.userName!!))
+    val password = mutableStateOf(TextFieldValue(vm.userSignIn.value?.password!!))
     Column(modifier) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -90,11 +91,16 @@ fun ProfileContent(vm: LCViewModel, modifier: Modifier = Modifier, onBack: () ->
                 .padding(8.dp)
         ) {
             Text(text = "Back", modifier = Modifier.clickable { onBack() })
-            Text(text = "Save", modifier = Modifier.clickable { })
+            Text(text = "Save", modifier = Modifier.clickable {
+                vm.auth.signOut()
+                vm.isSignApp.value=false
+                NavigateTo(navController,DestinationScreen.SignIn.route)
+
+            })
 
         }
 
-        ProfileImage(imgUrl = vm.userImg.value ?: "", vm = vm)
+        ProfileImage(imgUrl = vm.userSignIn.value!!.imgUrl ?: "", vm = vm)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -159,49 +165,22 @@ fun ProfileImage(imgUrl: String, vm: LCViewModel) {
                 }, horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-                CommonImage(data = imgUrl, modifier =Modifier.height(180.dp)
+            CommonImage(
+                data = imgUrl, modifier = Modifier
+                    .height(180.dp)
                     .width(180.dp)
                     .alpha(
                         1f
-                    ))
-
-
-        }
-
-    }
-}
-
-
-@Composable
-fun CommonImage(
-    data: Any? = null,
-    modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Crop
-) {
-
-    val painter = rememberImagePainter(
-        data = data,
-        builder = {
-            allowHardware(false)
-        }
-    )
-
-    Card(
-        shape = CircleShape, modifier = modifier
-            .alpha(
-                1f
+                    )
             )
-    ) {
-        Image(
-            painter = painter,
-            contentDescription = "...",
-            contentScale = contentScale,
-            modifier = Modifier.fillMaxWidth().fillMaxHeight()
-        )
+
+
+        }
+
     }
-
-
 }
+
+
 
 
 

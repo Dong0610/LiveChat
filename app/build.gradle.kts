@@ -107,6 +107,6 @@ dependencies {
 
 
     implementation("io.coil-kt:coil-compose:2.4.0")
-
+    implementation ("com.google.code.gson:gson:2.10.1")
     implementation("com.google.firebase:firebase-bom:30.3.0")
 }

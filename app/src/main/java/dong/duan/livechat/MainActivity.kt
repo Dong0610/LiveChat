@@ -13,6 +13,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import dong.duan.livechat.Model.UserData
+import dong.duan.livechat.Screen.FriendScreen
 import dong.duan.livechat.Screen.HomeScreen
 import dong.duan.livechat.Screen.ListChatScreen
 import dong.duan.livechat.Screen.ProfileScreen
@@ -22,8 +24,8 @@ import dong.duan.livechat.Screen.SignUpScreen
 import dong.duan.livechat.Screen.SingleChatScreen
 import dong.duan.livechat.Screen.SingleStatusScreen
 import dong.duan.livechat.Screen.SplashScreen
-import dong.duan.livechat.Screen.StatusScreen
 import dong.duan.livechat.ui.theme.LiveChatTheme
+import dong.duan.livechat.utility.fromJson
 import dong.duan.livechat.widget.animComposable
 
 
@@ -33,14 +35,16 @@ sealed class DestinationScreen(var route: String) {
     object SignIn : DestinationScreen("signin")
     object Profile : DestinationScreen("profile")
     object ListChat : DestinationScreen("Listchat")
-    object SingleChat : DestinationScreen("singlechat/{chatID}") {
-        fun createRoute(chatID: String) = "singlechat/$chatID"
-    }
+    object SingleChat : DestinationScreen("singlechat")
+//     object SingleChat : DestinationScreen("singlechat/{chatID}") {
+//        fun createRoute(chatID: String) = "singlechat/$chatID"
+//    }
 
     object Friend : DestinationScreen("friend")
     object SingleStatus : DestinationScreen("singlestatus/{chatID}") {
         fun createRoute(usID: String) = "singlestatus/$usID"
     }
+
     object Home : DestinationScreen("home")
 
 }
@@ -90,11 +94,12 @@ class MainActivity : ComponentActivity() {
                 ProfileScreen(navController, vm)
             }
             animComposable(DestinationScreen.SingleChat.route) {
-                val chatID = it.arguments?.getString("chatID")
-                SingleChatScreen(navController, vm, chatID, screenVModel)
+                val dts =
+                    navController.previousBackStackEntry?.savedStateHandle?.get<String>(key = "us")
+                SingleChatScreen(navController, vm, dts?.fromJson(UserData::class.java))
             }
             animComposable(DestinationScreen.Friend.route) {
-                StatusScreen(navController, vm)
+                FriendScreen(navController, vm)
             }
             animComposable(DestinationScreen.SingleStatus.route) {
                 SingleStatusScreen(navController, vm)

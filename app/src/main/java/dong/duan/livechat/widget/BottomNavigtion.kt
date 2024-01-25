@@ -25,7 +25,7 @@ import dong.duan.livechat.ui.theme.WHITE
 enum class BottomNavigtionItem(var icon: Int, var screen: DestinationScreen) {
     CHATLIST(R.drawable.ic_messenger, DestinationScreen.ListChat),
     HOMES(R.drawable.ic_homes,DestinationScreen.Home),
-    STATUSLIST(R.drawable.ic_users, DestinationScreen.Friend),
+    FRIEND(R.drawable.ic_users, DestinationScreen.Friend),
     PROFILE(R.drawable.user_solid, DestinationScreen.Profile)
 }
 
